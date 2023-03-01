@@ -4,10 +4,9 @@
 
 
 esp_sleep_wakeup_cause_t wakeup_reason;
-const uint8_t nKeyblocks = 9;
+const uint8_t nKeyblocks = 1; // will be 9 in the final version
 Keyblock keyblocks[nKeyblocks];
-
-
+#define KBlk keyblocks[0]
 /*
 Method to print the reason by which ESP32
 has been awaken from sleep
@@ -45,7 +44,8 @@ void setup()
 
 
 
+
 void loop()
 {
-  delay(500);
+  KBlk.test_keyblock();
 }

@@ -32,4 +32,5 @@ public:
     void setLED(bool red, bool green, bool blue, bool apply=false);
     bool getLimitSwitch(bool update=false);
     bool getPushButton(bool update=false);
+    void test_keyblock();
 };
