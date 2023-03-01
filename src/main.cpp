@@ -3,6 +3,8 @@
 #include "keyblock.h"
 #include "scanner_I2C.h"
 
+#define BUZZER_PIN 14
+
 esp_sleep_wakeup_cause_t wakeup_reason;
 const uint8_t nKeyblocks = 1;   // will be 9 in the final version
 Keyblock keyblocks[nKeyblocks];
@@ -39,9 +41,12 @@ void setup()
   // Set up the keyblocks
   keyblocks[0].setaddress(0x20);
 
+  // buzzer as output
+  pinMode(BUZZER_PIN, OUTPUT);
+
   //server_mode();
 
-  scanner_setup();
+  //scanner_setup();
 }
 
 
@@ -50,5 +55,11 @@ void setup()
 void loop()
 {
   //KBlk.test_keyblock();
-  scanner_loop();
+  //scanner_loop();
+
+  // buzzer test
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(200);
+  digitalWrite(BUZZER_PIN, LOW);
+  delay(50);
 }
