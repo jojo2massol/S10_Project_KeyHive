@@ -1,7 +1,7 @@
 #include <WiFi.h>
 #include "server_mode.h"
 #include "keyblock.h"
-
+#include "scanner_I2C.h"
 
 esp_sleep_wakeup_cause_t wakeup_reason;
 const uint8_t nKeyblocks = 1;   // will be 9 in the final version
@@ -39,7 +39,9 @@ void setup()
   // Set up the keyblocks
   keyblocks[0].setaddress(0x20);
 
-  server_mode();
+  //server_mode();
+
+  scanner_setup();
 }
 
 
@@ -47,5 +49,6 @@ void setup()
 
 void loop()
 {
-  KBlk.test_keyblock();
+  //KBlk.test_keyblock();
+  scanner_loop();
 }
