@@ -19,6 +19,7 @@ void server_mode()
   Serial.println("SSID:     " + String(ssid));
 #if !HIDE_AP_PASSWORD
   Serial.println("password: " + String(password));
+  Serial.println("QR: https://api.qrserver.com/v1/create-qr-code/?data=WIFI%3AT%3AWPA%3BS%3A"+ String(ssid) + "%3BP%3A"+ String(password) + "%3B%3B&size=220x220&margin=20" );
 #endif
 
   Serial.print("Setting soft-AP configuration ... ");
