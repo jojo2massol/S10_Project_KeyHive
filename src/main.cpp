@@ -1,8 +1,12 @@
 #include <WiFi.h>
 #include "server_mode.h"
+#include "keyblock.h"
+
+
 esp_sleep_wakeup_cause_t wakeup_reason;
-
-
+const uint8_t nKeyblocks = 1;   // will be 9 in the final version
+Keyblock keyblocks[nKeyblocks];
+#define KBlk keyblocks[0]       // remove in the final version
 /*
 Method to print the reason by which ESP32
 has been awaken from sleep
@@ -32,14 +36,16 @@ void setup()
   //Print the wakeup reason for ESP32
   print_wakeup_reason();
 
-
+  // Set up the keyblocks
+  keyblocks[0].setaddress(0x20);
 
   server_mode();
 }
 
 
 
+
 void loop()
 {
-  delay(500);
+  KBlk.test_keyblock();
 }
