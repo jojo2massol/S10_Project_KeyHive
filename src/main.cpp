@@ -1,6 +1,11 @@
 #include <WiFi.h>
 #include "server_mode.h"
+#include "keyblock.h"
+
+
 esp_sleep_wakeup_cause_t wakeup_reason;
+const uint8_t nKeyblocks = 9;
+Keyblock keyblocks[nKeyblocks];
 
 
 /*
@@ -32,7 +37,8 @@ void setup()
   //Print the wakeup reason for ESP32
   print_wakeup_reason();
 
-
+  // Set up the keyblocks
+  keyblocks[0].setaddress(0x20);
 
   server_mode();
 }
