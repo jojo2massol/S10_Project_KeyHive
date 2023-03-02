@@ -15,13 +15,14 @@ Keyblock keyblocks[nKeyblocks];
 Method to print the reason by which ESP32
 has been awaken from sleep
 */
-void print_wakeup_reason(){
+void print_wakeup_reason()
+{
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
-  switch(wakeup_reason)
+  switch (wakeup_reason)
   {
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
     case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
     case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
     case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
@@ -30,12 +31,9 @@ void print_wakeup_reason(){
   }
 }
 
-void door_closed() {
-    Serial.println("Door closed");
-
-    // in this function, just unlog the user, turn off leds, ...
-
-
+void IRAM_ATTR door_closed()
+{ // this function will be called when the door is closed
+  digitalWrite(BUZZER_PIN, HIGH); // turn on the buzzer
 }
 void setup()
 {
@@ -44,7 +42,7 @@ void setup()
     ; // Wait for user to open terminal
   Serial.println(F("Serial connected"));
 
-  //Print the wakeup reason for ESP32
+  // Print the wakeup reason for ESP32
   print_wakeup_reason();
 
   // Set up the keyblocks
@@ -54,22 +52,20 @@ void setup()
   pinMode(BUZZER_PIN, OUTPUT);
   // Lock
   pinMode(O_LK_PIN, OUTPUT);
+  digitalWrite(O_LK_PIN, LOW);
   pinMode(I_LK_PIN, INPUT_PULLUP);
   attachInterrupt(I_LK_PIN, door_closed, FALLING);
 
-  //server_mode();
+  // server_mode();
 
-  //scanner_setup();
-  //SDcard_test();
+  // scanner_setup();
+  // SDcard_test();
 }
-
-
-
 
 void loop()
 {
-  //KBlk.test_keyblock();
-  //scanner_loop();
+  // KBlk.test_keyblock();
+  // scanner_loop();
 
   /*
   // buzzer test
@@ -79,16 +75,19 @@ void loop()
   delay(50);*/
 
   // EM test
-  // if lock input is LOW, then open the lock.
-  
-  // print the state of the lock input
-  //delay(1000);
-  //Serial.println(digitalRead(I_LK_PIN));
   if (digitalRead(I_LK_PIN) == LOW)
   {
+    Serial.println("Door closed");
+
+    // in this function, just unlog the user, turn off leds, EMs, ...
+    //todo
+
+
+    //test EM (please remove in the final version)
     delay(2000);
     digitalWrite(O_LK_PIN, HIGH);
     delay(50);
     digitalWrite(O_LK_PIN, LOW);
+    digitalWrite(BUZZER_PIN, LOW);
   }
 }
