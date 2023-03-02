@@ -4,6 +4,7 @@
 #include "scanner_I2C.h"
 #include "pins.h"
 #include "sdcard.h"
+#include "front_door.h"
 
 
 
@@ -31,10 +32,7 @@ case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal us
   }
 }
 
-void IRAM_ATTR door_closed()
-{ // this function will be called when the door is closed
-  digitalWrite(BUZZER_PIN, HIGH); // turn on the buzzer
-}
+
 void setup()
 {
   Serial.begin(921600); // Start serial, to output debug data
@@ -51,10 +49,7 @@ void setup()
   // buzzer as output
   pinMode(BUZZER_PIN, OUTPUT);
   // Lock
-  pinMode(O_LK_PIN, OUTPUT);
-  digitalWrite(O_LK_PIN, LOW);
-  pinMode(I_LK_PIN, INPUT_PULLUP);
-  attachInterrupt(I_LK_PIN, door_closed, FALLING);
+  front_door_setup();
 
   // server_mode();
 
@@ -75,19 +70,5 @@ void loop()
   delay(50);*/
 
   // EM test
-  if (digitalRead(I_LK_PIN) == LOW)
-  {
-    Serial.println("Door closed");
-
-    // in this function, just unlog the user, turn off leds, EMs, ...
-    //todo
-
-
-    //test EM (please remove in the final version)
-    delay(2000);
-    digitalWrite(O_LK_PIN, HIGH);
-    delay(50);
-    digitalWrite(O_LK_PIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
-  }
+  front_door_loop();
 }
