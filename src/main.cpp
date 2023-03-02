@@ -55,11 +55,12 @@ void setup()
 void loop()
 {
   //KBlk.test_keyblock();
-  //scanner_loop();
+  scanner_loop();
 
+  /*
   // buzzer test
   digitalWrite(BUZZER_PIN, HIGH);
   delay(200);
   digitalWrite(BUZZER_PIN, LOW);
-  delay(50);
+  delay(50);*/
 }

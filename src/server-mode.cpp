@@ -10,7 +10,7 @@ void server_mode()
   // Initialize SPIFFS
   if (!SPIFFS.begin(true))
   {
-    Serial.println("An Error has occurred while mounting SPIFFS");
+    log_e("An Error has occurred while mounting SPIFFS");
     return;
   }
   // set watchdog

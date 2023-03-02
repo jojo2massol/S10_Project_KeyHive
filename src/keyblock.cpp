@@ -35,6 +35,7 @@ uint8_t Keyblock::read()
         }
         // display file name and line number error
         Serial.println("Error: device " + String(address) + "unavailable, try=" + String(i + 1) + "/5 : " + String(__FILE__) + " line " + String(__LINE__));
+        //log_e(String("device " + String(address) + "unavailable, try=" + String(i + 1) + "/5"));
         delay(50);
     }
     return state;
