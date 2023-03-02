@@ -2,8 +2,10 @@
 #include "server_mode.h"
 #include "keyblock.h"
 #include "scanner_I2C.h"
+#include "pins.h"
+#include "sdcard.h"
 
-#define BUZZER_PIN 14
+
 
 esp_sleep_wakeup_cause_t wakeup_reason;
 const uint8_t nKeyblocks = 1;   // will be 9 in the final version
@@ -28,6 +30,13 @@ void print_wakeup_reason(){
   }
 }
 
+void door_closed() {
+    Serial.println("Door closed");
+
+    // in this function, just unlog the user, turn off leds, ...
+
+
+}
 void setup()
 {
   Serial.begin(921600); // Start serial, to output debug data
@@ -43,10 +52,15 @@ void setup()
 
   // buzzer as output
   pinMode(BUZZER_PIN, OUTPUT);
+  // Lock
+  pinMode(O_LK_PIN, OUTPUT);
+  pinMode(I_LK_PIN, INPUT_PULLUP);
+  attachInterrupt(I_LK_PIN, door_closed, FALLING);
 
   //server_mode();
 
   //scanner_setup();
+  //SDcard_test();
 }
 
 
@@ -55,7 +69,7 @@ void setup()
 void loop()
 {
   //KBlk.test_keyblock();
-  scanner_loop();
+  //scanner_loop();
 
   /*
   // buzzer test
@@ -63,4 +77,18 @@ void loop()
   delay(200);
   digitalWrite(BUZZER_PIN, LOW);
   delay(50);*/
+
+  // EM test
+  // if lock input is LOW, then open the lock.
+  
+  // print the state of the lock input
+  //delay(1000);
+  //Serial.println(digitalRead(I_LK_PIN));
+  if (digitalRead(I_LK_PIN) == LOW)
+  {
+    delay(2000);
+    digitalWrite(O_LK_PIN, HIGH);
+    delay(50);
+    digitalWrite(O_LK_PIN, LOW);
+  }
 }
