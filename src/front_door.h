@@ -3,7 +3,7 @@
 #include "pins.h"
 
 volatile unsigned long door_closed_date = 0;
-volatile unsigned long first_door_closed_date = 0;
+volatile unsigned long fisrt_door_closed_date = 0;
 
 // interrupt service routine for the door closed signal
 void IRAM_ATTR door_closed()
@@ -59,7 +59,7 @@ void front_door_loop()
             // in this function, just unlog the user, turn off leds, EMs, ...
             // todo
         }
-        if (millis() - first_door_closed_date > 10000)
+        if (millis() - fisrt_door_closed_date > 10000)
         {
             // door unclosed for more than 10s
 
@@ -71,3 +71,4 @@ void front_door_loop()
 
         }
     }
+}
