@@ -52,6 +52,7 @@ void front_door_loop()
                 door_closed_date = 0;
                 // door closed correctly
                 log_e("Door closed correctly for more than 2s");
+                //TODO : save which user has closed the door correctly, and log it
                 open_door();
             }
 
@@ -64,5 +65,9 @@ void front_door_loop()
 
             // door closed uncorrectly
             log_e("Door closed uncorrectly for more than 10s");
+            door_closed_date = 0;
+
+            // TODO : save which user has not closed the door correctly, and log it
+
         }
     }
