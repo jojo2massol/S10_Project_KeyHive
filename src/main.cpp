@@ -52,16 +52,19 @@ void setup()
 
   // buzzer as output
   pinMode(BUZZER_PIN, OUTPUT);
-  // Lock
-  //front_door_setup();
 
-  server_setup();
+
+
+  // Lock
+  front_door_setup();
+
+  //server_setup();
 
   // scanner_setup();
   //SDcard_test();
 
   // NFC
-  //NFC_setup();
+  NFC_setup();
 
 }
 
@@ -69,14 +72,14 @@ void loop()
 {
 
   // server
-  server_loop();
+  //server_loop();
 
   // NFC read
   //NFC_loop();
 
 
   // KBlk.test_keyblock();
-  // scanner_loop();
+  //scanner_loop();
 
   /*
   // buzzer test
@@ -86,5 +89,5 @@ void loop()
   delay(50);*/
 
   // EM test
-  //front_door_loop();
+  front_door_loop();
 }

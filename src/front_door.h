@@ -2,19 +2,44 @@
 
 #include "pins.h"
 
-volatile unsigned long door_closed_date = 0;
-volatile unsigned long first_door_closed_date = 0;
+volatile unsigned long door_change_date = 0;
+volatile unsigned long last_door_change_date = 0;
+
+#define DOOR_CLOSED 0
+#define DOOR_OPEN 1
+#define DOOR_OPENING 2
+#define DOOR_SHOULD_BE_CLOSED 3
+
+volatile uint8_t door_state = DOOR_CLOSED;
+volatile bool door_changed = true;
+
+void open_door()
+{
+    door_state = DOOR_OPEN;
+    door_changed = true;
+    digitalWrite(O_LK_PIN, HIGH);
+    // wait until the door is open, or 5 seconds
+    volatile unsigned long opentime = millis();
+    while (digitalRead(I_LK_PIN) == LOW && millis() - opentime < 5000)
+    {
+    }
+    digitalWrite(O_LK_PIN, LOW);
+    if (digitalRead(I_LK_PIN) == LOW)
+    {
+        // the door is still closed, issue
+        log_e("Door is still closed after 5 seconds");
+    }
+    else
+    {
+        Serial.println("Door opened in " + String(millis() - opentime) + " ms");
+    }
+}
 
 // interrupt service routine for the door closed signal
-void IRAM_ATTR door_closed()
+void IRAM_ATTR door_int()
 {
-    // this function will be called when the door is closed
-    // log_e("door_closed()");
-    digitalWrite(BUZZER_PIN, HIGH); // turn on the buzzer
-    // read time
-    if (door_closed_date == 0)
-        first_door_closed_date = millis();
-    door_closed_date = millis();
+    door_change_date = millis();
+    door_changed = true;
 }
 
 void front_door_setup()
@@ -22,57 +47,116 @@ void front_door_setup()
     pinMode(O_LK_PIN, OUTPUT);
     digitalWrite(O_LK_PIN, LOW);
     pinMode(I_LK_PIN, INPUT_PULLUP);
-    attachInterrupt(I_LK_PIN, door_closed, FALLING);
-}
+    attachInterrupt(I_LK_PIN, door_int, CHANGE);
+    pinMode(LED_G, OUTPUT);
+    pinMode(LED_B, OUTPUT);
+    pinMode(LED_R, OUTPUT);
+    digitalWrite(LED_G, HIGH);
+    digitalWrite(LED_B, HIGH);
+    digitalWrite(LED_R, HIGH);
 
-void open_door()
-{
-    digitalWrite(O_LK_PIN, HIGH);
-    delay(50);
-    digitalWrite(O_LK_PIN, LOW);
-    Serial.println("Door opened");
-}
-
-void front_door_test()
-{
-    open_door();
-    digitalWrite(BUZZER_PIN, LOW);
+    door_state = digitalRead(I_LK_PIN) == LOW ? DOOR_CLOSED : DOOR_OPEN;
+    door_changed = true;
 }
 
 void front_door_loop()
 {
-    if (door_closed_date != 0) // door closed ? (recently detected)
+    
+    if (DOOR_SHOULD_BE_CLOSED == door_state)
     {
-        if (digitalRead(I_LK_PIN) == LOW) // detected door closed
+        if ((millis() - door_change_date > 2000) && (digitalRead(I_LK_PIN) == LOW))
         {
-
-            if (millis() - door_closed_date > 2000)
-            {
-                // door closed for more than 2s
-                door_closed_date = 0;
-                // turn off buzzer
-                digitalWrite(BUZZER_PIN, LOW);
-                log_e("Door closed correctly for more than 2s");
-
-                // TODO : save which user has closed the door correctly, and log it
-                open_door();
-                // wait for the door to be really opened
-                delay(2000);
-            }
-
-            // in this function, just unlog the user, turn off leds, EMs, ...
-            // todo
+            door_state = DOOR_CLOSED;
+            door_changed = true;
         }
-        if (first_door_closed_date != first_door_closed_date)
-            if (millis() - first_door_closed_date > 10000)
+    }
+    if (door_changed)
+    {
+        door_changed = false;
+        //Serial.print("Changed :" + String(digitalRead(I_LK_PIN)));
+        if (digitalRead(I_LK_PIN) == LOW)
+        { // door just closed
+            switch (door_state)
             {
-                // door unclosed for more than 10s
-
-                // door closed uncorrectly
-                log_e("Door closed uncorrectly for more than 10s");
-                door_closed_date = 0;
-
-                // TODO : save which user has not closed the door correctly, and log it
+            case DOOR_CLOSED:
+                // the door is closed for more than 2 seconds, everything is fine
+                Serial.println("door is closed for more than 2 seconds");
+                // red led
+                digitalWrite(LED_B, HIGH);
+                digitalWrite(LED_G, HIGH);
+                digitalWrite(LED_R, LOW);
+                break;
+            case DOOR_OPENING:
+                Serial.println("door will open soon");
+                // the door should be open soon
+                // cyan led
+                digitalWrite(LED_B, LOW);
+                digitalWrite(LED_G, LOW);
+                digitalWrite(LED_R, HIGH);
+                open_door();
+                break;
+            case DOOR_OPEN:
+                // door probably just closed
+                Serial.println("door is considered open, but is closed. Closing it.");
+                // blue led
+                digitalWrite(LED_B, LOW);
+                digitalWrite(LED_G, HIGH);
+                digitalWrite(LED_R, HIGH);
+                door_state = DOOR_SHOULD_BE_CLOSED;
+                door_changed = true;
+                door_change_date = millis();
+                break;
+            case DOOR_SHOULD_BE_CLOSED:
+                // door is closed, and stay shoud be until 2 seconds
+                if (millis() - door_change_date > 2000)
+                {
+                    door_state = DOOR_CLOSED;
+                    door_changed = true;
+                    Serial.println("door just closed after 2 seconds");
+                } else{
+                    Serial.println("door is closed, and will be considered as closed in 2 seconds");
+                }
             }
+        }
+        else
+        { // door opened
+            switch (door_state)
+            {
+
+            case DOOR_OPENING:
+                // the door is opening, everything is fine
+                Serial.println("door is opening");
+                // cyan led
+                digitalWrite(LED_B, LOW);
+                digitalWrite(LED_G, LOW);
+                digitalWrite(LED_R, HIGH);
+                open_door();
+                break;
+            case DOOR_OPEN:
+                // the door is open, everything is fine
+                Serial.println("door is open");
+                // green led
+                digitalWrite(LED_B, HIGH);
+                digitalWrite(LED_G, LOW);
+                digitalWrite(LED_R, HIGH);
+                break;
+            case DOOR_SHOULD_BE_CLOSED:
+                // the door is open, but should be closed, alarm !!!
+                Serial.println("door is open, but should be closed, alarm !!!");
+                // magenta led
+                digitalWrite(LED_B, LOW);
+                digitalWrite(LED_G, HIGH);
+                digitalWrite(LED_R, LOW);
+                break;
+            case DOOR_CLOSED:
+                // the door is closed, but should be open, alarm !!!
+                Serial.println("door is open, but should be considered as closed, alarm !!!");
+                // magenta led
+                digitalWrite(LED_B, LOW);
+                digitalWrite(LED_G, HIGH);
+                digitalWrite(LED_R, LOW);
+                break;
+            }
+        }
     }
 }
