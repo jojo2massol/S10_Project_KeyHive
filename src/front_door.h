@@ -2,12 +2,8 @@
 
 #include "pins.h"
 
-hw_timer_t *Door_timer;
-volatile bool door_timer_set = false;
-
 volatile unsigned long door_closed_date = 0;
-volatile bool door_correcly_closed_flag = false;
-volatile bool door_uncorrecly_closed_flag = false;
+volatile unsigned long first_door_closed_date = 0;
 
 // interrupt service routine for the door closed signal
 void IRAM_ATTR door_closed()
@@ -16,27 +12,9 @@ void IRAM_ATTR door_closed()
     // log_e("door_closed()");
     digitalWrite(BUZZER_PIN, HIGH); // turn on the buzzer
     // read time
+    if (door_closed_date == 0)
+        fisrt_door_closed_date = millis();
     door_closed_date = millis();
-}
-
-void IRAM_ATTR onTimer()
-{
-    // log_e("onTimer()");
-    //  disable the timer interrupt
-    timerWrite(Door_timer, 0);
-    timerAlarmDisable(Door_timer);
-
-    // if the door is closed for more than 1.8 seconds, then open it
-    if ((millis() - door_closed_date > 1500) && digitalRead(I_LK_PIN) == LOW)
-    {
-        door_correcly_closed_flag = true;
-    }
-    else
-    {
-        // log_e("Door not closed correctly");
-        door_uncorrecly_closed_flag = true;
-    }
-    door_timer_set = false;
 }
 
 void front_door_setup()
@@ -45,9 +23,6 @@ void front_door_setup()
     digitalWrite(O_LK_PIN, LOW);
     pinMode(I_LK_PIN, INPUT_PULLUP);
     attachInterrupt(I_LK_PIN, door_closed, FALLING);
-
-    Door_timer = timerBegin(0, 80, true);
-    timerAlarmDisable(Door_timer);
 }
 
 void open_door()
@@ -66,37 +41,28 @@ void front_door_test()
 
 void front_door_loop()
 {
-    if (digitalRead(I_LK_PIN) == LOW)
+    if (door_closed_date != 0) // door closed ? (recently detected)
     {
-        if (door_correcly_closed_flag)
+        if (digitalRead(I_LK_PIN) == LOW) // detected door closed
         {
-            door_correcly_closed_flag = false;
-            Serial.println("Door closed");
 
-            // test EM (please remove in the final version)
-            front_door_test();
-            delay(1000);
+            if (millis() - door_closed_date > 2000)
+            {
+                // door closed for more than 2s
+                door_closed_date = 0;
+                // door closed correctly
+                log_e("Door closed correctly for more than 2s");
+                open_door();
+            }
+
+            // in this function, just unlog the user, turn off leds, EMs, ...
+            // todo
         }
-
-        // add a timer interrupt in 2 seconds if not already done
-        else if (!door_timer_set && !door_uncorrecly_closed_flag)
+        if (millis() - first_door_closed_date > 10000)
         {
-            Serial.println("timer set");
-            door_timer_set = true;
-            //
+            // door unclosed for more than 10s
 
-            timerAttachInterrupt(Door_timer, &onTimer, true);
-            timerAlarmWrite(Door_timer, 2000000, false);
-            timerAlarmEnable(Door_timer);
+            // door closed uncorrectly
+            log_e("Door closed uncorrectly for more than 10s");
         }
-        // Serial.println("Door closed?");
-
-        // in this function, just unlog the user, turn off leds, EMs, ...
-        // todo
     }
-    else if (door_uncorrecly_closed_flag)
-    {
-        door_uncorrecly_closed_flag = false;
-        Serial.println("Door not closed correctly");
-    }
-}

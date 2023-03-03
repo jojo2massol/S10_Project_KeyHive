@@ -54,7 +54,7 @@ void setup()
   // server_mode();
 
   // scanner_setup();
-  // SDcard_test();
+  //SDcard_test();
 }
 
 void loop()
