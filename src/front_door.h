@@ -3,7 +3,7 @@
 #include "pins.h"
 
 volatile unsigned long door_closed_date = 0;
-volatile unsigned long fisrt_door_closed_date = 0;
+volatile unsigned long first_door_closed_date = 0;
 
 // interrupt service routine for the door closed signal
 void IRAM_ATTR door_closed()
@@ -13,7 +13,7 @@ void IRAM_ATTR door_closed()
     digitalWrite(BUZZER_PIN, HIGH); // turn on the buzzer
     // read time
     if (door_closed_date == 0)
-        fisrt_door_closed_date = millis();
+        first_door_closed_date = millis();
     door_closed_date = millis();
 }
 
@@ -50,25 +50,29 @@ void front_door_loop()
             {
                 // door closed for more than 2s
                 door_closed_date = 0;
-                // door closed correctly
+                // turn off buzzer
+                digitalWrite(BUZZER_PIN, LOW);
                 log_e("Door closed correctly for more than 2s");
-                //TODO : save which user has closed the door correctly, and log it
+
+                // TODO : save which user has closed the door correctly, and log it
                 open_door();
+                // wait for the door to be really opened
+                delay(2000);
             }
 
             // in this function, just unlog the user, turn off leds, EMs, ...
             // todo
         }
-        if (millis() - fisrt_door_closed_date > 10000)
-        {
-            // door unclosed for more than 10s
+        if (first_door_closed_date != first_door_closed_date)
+            if (millis() - first_door_closed_date > 10000)
+            {
+                // door unclosed for more than 10s
 
-            // door closed uncorrectly
-            log_e("Door closed uncorrectly for more than 10s");
-            door_closed_date = 0;
+                // door closed uncorrectly
+                log_e("Door closed uncorrectly for more than 10s");
+                door_closed_date = 0;
 
-            // TODO : save which user has not closed the door correctly, and log it
-
-        }
+                // TODO : save which user has not closed the door correctly, and log it
+            }
     }
 }
