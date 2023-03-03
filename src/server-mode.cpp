@@ -4,8 +4,7 @@
 bool busy = false;
 AsyncWebServer server(80);
 
-
-void server_mode()
+void server_setup()
 {
   // Initialize SPIFFS
   if (!SPIFFS.begin(true))
@@ -21,7 +20,7 @@ void server_mode()
   Serial.println("SSID:     " + String(ssid));
 #if !HIDE_AP_PASSWORD
   Serial.println("password: " + String(password));
-  Serial.println("QR: https://api.qrserver.com/v1/create-qr-code/?data=WIFI%3AT%3AWPA%3BS%3A"+ String(ssid) + "%3BP%3A"+ String(password) + "%3B%3B&size=512x512&margin=16" );
+  Serial.println("QR: https://api.qrserver.com/v1/create-qr-code/?data=WIFI%3AT%3AWPA%3BS%3A" + String(ssid) + "%3BP%3A" + String(password) + "%3B%3B&size=512x512&margin=16");
 #endif
 
   Serial.print("Setting soft-AP configuration ... ");
@@ -40,15 +39,13 @@ void server_mode()
               // reset watchdog
               esp_task_wdt_reset();
               request->send(SPIFFS, "/index.html", String(), false);
-              Serial.println("/ HTTP_GET /index.html"); 
-              });
+              Serial.println("/ HTTP_GET /index.html"); });
   server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               // reset watchdog
               esp_task_wdt_reset();
               request->send(SPIFFS, "/index.html", String(), false);
-              Serial.println("/ HTTP_GET /index.html"); 
-              });
+              Serial.println("/ HTTP_GET /index.html"); });
 
   server.on("/pic", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -63,9 +60,8 @@ void server_mode()
             busy = true;
             Serial.println("/ HTTP_GET /pic");
             
-            busy = false; 
-            });
-                                
+            busy = false; });
+
   server.on("/list", HTTP_GET, [](AsyncWebServerRequest *request)
             {
       // reset watchdog
@@ -147,8 +143,8 @@ void server_mode()
       // reset ESP32
       ESP.restart(); });
 
-      server.on("/reboot", HTTP_ANY, [](AsyncWebServerRequest *request)
-                {
+  server.on("/reboot", HTTP_ANY, [](AsyncWebServerRequest *request)
+            {
     // reset watchdog
     esp_task_wdt_reset();
     request->send(200, "text/plain", "Restarting ...");
@@ -157,23 +153,21 @@ void server_mode()
     delay(1000);
     // reset ESP32
     ESP.restart(); });
-      server.onNotFound(notFound);
-      server.begin();
+  server.onNotFound(notFound);
+  server.begin();
 
-      esp_task_wdt_reset();
-
-      uint clients = 0;
-      bool pixel = false;
-      while (true)
-      {
-        // if clients are connected, reset watchdog
-        if (WiFi.softAPgetStationNum())
-          esp_task_wdt_reset();
-        if (clients != WiFi.softAPgetStationNum())
-        {
-          clients = WiFi.softAPgetStationNum();
-          Serial.println("Clients: " + String(clients));
-        }
-        delay(200);
-      }
+  esp_task_wdt_reset();
+}
+void server_loop()
+{
+  uint clients = 0;
+  // if clients are connected, reset watchdog
+  if (WiFi.softAPgetStationNum())
+    esp_task_wdt_reset();
+  if (clients != WiFi.softAPgetStationNum())
+  {
+    clients = WiFi.softAPgetStationNum();
+    Serial.println("Clients: " + String(clients));
+  }
+  delay(200);
 }

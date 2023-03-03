@@ -55,21 +55,24 @@ void setup()
   // Lock
   //front_door_setup();
 
-  // server_mode();
+  server_setup();
 
   // scanner_setup();
   //SDcard_test();
 
   // NFC
-  NFC_setup();
+  //NFC_setup();
 
 }
 
 void loop()
 {
 
+  // server
+  server_loop();
+
   // NFC read
-  NFC_loop();
+  //NFC_loop();
 
 
   // KBlk.test_keyblock();
