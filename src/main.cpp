@@ -1,17 +1,21 @@
 #include <WiFi.h>
+
+
+
 #include "server_mode.h"
 #include "keyblock.h"
 #include "scanner_I2C.h"
 #include "pins.h"
 #include "sdcard.h"
 #include "front_door.h"
-
+#include "NFCread.h"
 
 
 esp_sleep_wakeup_cause_t wakeup_reason;
 const uint8_t nKeyblocks = 1;   // will be 9 in the final version
 Keyblock keyblocks[nKeyblocks];
 #define KBlk keyblocks[0]       // remove in the final version
+
 /*
 Method to print the reason by which ESP32
 has been awaken from sleep
@@ -49,16 +53,25 @@ void setup()
   // buzzer as output
   pinMode(BUZZER_PIN, OUTPUT);
   // Lock
-  front_door_setup();
+  //front_door_setup();
 
   // server_mode();
 
   // scanner_setup();
   //SDcard_test();
+
+  // NFC
+  NFC_setup();
+
 }
 
 void loop()
 {
+
+  // NFC read
+  NFC_loop();
+
+
   // KBlk.test_keyblock();
   // scanner_loop();
 
@@ -70,5 +83,5 @@ void loop()
   delay(50);*/
 
   // EM test
-  front_door_loop();
+  //front_door_loop();
 }
