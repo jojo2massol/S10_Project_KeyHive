@@ -88,6 +88,7 @@ void keyblock_loop()
           if (keyblocks[i].getEM())
           {
             keyblocks[i].setEM(false, true);
+            keyblocks[i].key_state = KEY_LOCKED;
             for (int j = 0; j < nKeyblocks; j++)
             {
               if (keyblocks[j].getEM())
@@ -106,6 +107,7 @@ void keyblock_loop()
 
       if (keyblocks[i].getPushButton() != last_bt_state)
       {
+        Serial.println("Button state changed: " + String(keyblocks[i].getPushButton()));
         EM_on_time = millis();
       }
 
@@ -123,6 +125,8 @@ void keyblock_loop()
           // TODO: check if user is allowed to free the key
           if (millis() - EM_on_time > 1000)
           {
+            Serial.println("Key " + String(i) + " locking");
+            keyblocks[i].key_state = KEY_LOCKING;
             keyblocks[i].setEM(true, true);
             EM_on_flag = true;
             EM_on_time = millis();
@@ -140,13 +144,13 @@ void keyblock_loop()
       {
         if (keyblocks[i].getPushButton(true))
         {
-          // TODO: checkeyblock_interruptk if user is allowed to free the key
-          if (millis() - EM_on_time > 1000)
-          {
-            keyblocks[i].setEM(true, true);
-            EM_on_flag = true;
-            EM_on_time = millis();
-          }
+          // TODO: check if user is allowed to free the key
+
+          Serial.println("Key " + String(i) + " releasing");
+          keyblocks[i].setEM(true, true);
+          keyblocks[i].key_state = KEY_RELEASING;
+          EM_on_flag = true;
+          EM_on_time = millis();
         }
       }
     }
@@ -157,12 +161,14 @@ void keyblock_loop()
   {
     if (millis() - EM_on_time > 10000)
     {
+      Serial.println("Timeout reached, turning off EM, and saving 'released' state");
       // if so, turn off the EM
       for (int i = 0; i < nKeyblocks; i++)
       {
         if (keyblocks[i].getEM())
         {
           keyblocks[i].setEM(false, true);
+          keyblocks[i].key_state = KEY_RELEASED;
         }
       }
       EM_on_flag = false;
