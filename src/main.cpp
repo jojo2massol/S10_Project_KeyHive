@@ -79,7 +79,7 @@ void loop()
   // server
   // server_loop();
 
-  if (door_state == DOOR_CLOSED)
+  if ((door_state == DOOR_CLOSED) || (door_state == DOOR_SHOULD_BE_CLOSED))
   { // NFC read
     if (NFC_loop())
     {

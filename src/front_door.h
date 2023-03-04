@@ -64,17 +64,23 @@ void front_door_loop()
 
     if (DOOR_SHOULD_BE_CLOSED == door_state)
     {
-        if ((millis() - door_change_date > 2000) && (digitalRead(I_LK_PIN) == LOW))
+        if (millis() - door_change_date > 2000)
         {
-            door_state = DOOR_CLOSED;
-            door_changed = true;
+            if (digitalRead(I_LK_PIN) == LOW)
+            {
+                door_state = DOOR_CLOSED;
+                door_changed = true;
+            } else 
+            {
+                //buzzer on
+                digitalWrite(BUZZER_PIN, HIGH);
+            }
         }
-    }
-    else if (millis() - door_change_date > 2000)
-    {
-        // buzzer off
+    } else{
+        //buzz off
         digitalWrite(BUZZER_PIN, LOW);
     }
+
     if (door_changed)
     {
         door_changed = false;
@@ -107,8 +113,6 @@ void front_door_loop()
                 digitalWrite(LED_B, LOW);
                 digitalWrite(LED_G, HIGH);
                 digitalWrite(LED_R, HIGH);
-                // buzzer on
-                digitalWrite(BUZZER_PIN, HIGH);
                 door_state = DOOR_SHOULD_BE_CLOSED;
                 door_changed = true;
                 door_change_date = millis();
@@ -164,6 +168,7 @@ void front_door_loop()
                 digitalWrite(LED_B, LOW);
                 digitalWrite(LED_G, HIGH);
                 digitalWrite(LED_R, LOW);
+                digitalWrite(BUZZER_PIN, HIGH);
                 break;
             }
         }

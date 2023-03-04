@@ -12,7 +12,7 @@ void NFC_setup()
     uint32_t versiondata = nfc.getFirmwareVersion();
     if (!versiondata)
     {
-        Serial.print("Didn't find PN53x board");
+        log_e("Didn't find PN53x board");
         while (1)
             ; // halt
     }
