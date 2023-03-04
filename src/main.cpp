@@ -10,9 +10,16 @@
 #include "user.h"
 
 esp_sleep_wakeup_cause_t wakeup_reason;
-const uint8_t nKeyblocks = 1; // will be 9 in the final version
+#define nKeyblocks 1 // number of keyblocks
 Keyblock keyblocks[nKeyblocks];
 #define KBlk keyblocks[0] // remove in the final version
+volatile bool EM_on_flag = false;
+volatile unsigned long EM_on_time = 0;
+
+uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uint8_t uidLength;
+bool user_logged_in = false;
+bool keyblocks_off = false;
 
 /*
 Method to print the reason by which ESP32
@@ -46,6 +53,180 @@ void print_wakeup_reason()
   }
 }
 
+void IRAM_ATTR keyblock_interrupt()
+{
+  // read all keyblocks, and check if any have a limit switch pressed or a push button pressed
+
+  for (int i = 0; i < nKeyblocks; i++)
+  {
+    /*
+     if key Locking :
+     - check if limit switch pressed
+       if so:
+          - unpower the electromagnet,
+          - check if any keyblocks have EM powered with getEM(),
+            if not so:
+              - set EM_on_flag to false
+     - else if button pressed or just released, set EM_on_time to millis()
+    */
+
+    // read last state of the button
+    bool last_bt_state = keyblocks[i].getPushButton(false);
+    if (keyblocks[i].key_state == KEY_LOCKING)
+    {
+      if (keyblocks[i].getLimitSwitch(true))
+      {
+        if (keyblocks[i].getEM())
+        {
+          keyblocks[i].setEM(false, true);
+          for (int j = 0; j < nKeyblocks; j++)
+          {
+            if (keyblocks[j].getEM())
+            {
+              break;
+            }
+            else if (j == nKeyblocks - 1)
+            { // if no EM is powered, set EM_on_flag to false
+              EM_on_flag = false;
+              EM_on_time = 0;
+            }
+          }
+        }
+      }
+    }
+
+    if (keyblocks[i].getPushButton() != last_bt_state)
+    {
+      EM_on_time = millis();
+    }
+
+    /*
+     if key released :
+     - check if push button pressed
+     - check if the user is allowed to set the key,
+       if so, set the EM, and set the EM_on_flag to true.
+    */
+
+    if (keyblocks[i].key_state == KEY_RELEASED)
+    {
+      if (keyblocks[i].getPushButton(true))
+      {
+        // TODO: check if user is allowed to free the key
+        if (millis() - EM_on_time > 1000)
+        {
+          keyblocks[i].setEM(true, true);
+          EM_on_flag = true;
+          EM_on_time = millis();
+        }
+      }
+    }
+    /*
+     if key locked :
+     - check if push button pressed
+     - check if the user is allowed to free the key,
+       if so, set the EM, and set the EM_on_flag to true.
+    */
+
+    if (keyblocks[i].key_state == KEY_LOCKED)
+    {
+      if (keyblocks[i].getPushButton(true))
+      {
+        // TODO: check if user is allowed to free the key
+        if (millis() - EM_on_time > 1000)
+        {
+          keyblocks[i].setEM(true, true);
+          EM_on_flag = true;
+          EM_on_time = millis();
+        }
+      }
+    }
+  }
+}
+
+void keyblock_loop()
+{
+  // check if timout has been reached
+  if (EM_on_flag)
+  {
+    if (millis() - EM_on_time > 10000)
+    {
+      // if so, turn off the EM
+      for (int i = 0; i < nKeyblocks; i++)
+      {
+        if (keyblocks[i].getEM())
+        {
+          keyblocks[i].setEM(false, true);
+        }
+      }
+      EM_on_flag = false;
+      EM_on_time = 0;
+    }
+  }
+
+  // check if user logged in
+  if (user_logged_in)
+  {
+    keyblocks_off = false;
+    // read permission of the user for each key
+    for (int i = 0; i < nKeyblocks; i++)
+    {
+      // TODO : read permission of the user for each key
+      // if permission is granted, allowed keys can be released.
+
+      /*
+      permission not granted:
+      - key is red
+      if permission granted:
+      - locked key is green
+      - released key is yellow
+      - locking key is magenta
+      - releasing key is cyan
+      */
+      if (check_card(uid, uidLength))
+      {
+        if (keyblocks[i].key_state == KEY_LOCKED)
+        {
+          keyblocks[i].setLED(false, true, false, true); // green
+        }
+        else if (keyblocks[i].key_state == KEY_RELEASED)
+        {
+          keyblocks[i].setLED(true, true, false, true); // yellow
+        }
+        else if (keyblocks[i].key_state == KEY_LOCKING)
+        {
+          keyblocks[i].setLED(true, false, true, true); // magenta
+        }
+        else if (keyblocks[i].key_state == KEY_RELEASING)
+        {
+          keyblocks[i].setLED(false, true, true, true); // cyan
+        }
+      }
+      else
+      {
+        keyblocks[i].setLED(true, false, false, true); // red
+      }
+    }
+  }
+  else if (!keyblocks_off) // if user not logged in, turn off all EMs and leds
+  { // close EMs
+    for (int i = 0; i < nKeyblocks; i++)
+    {
+      if ((keyblocks[i].key_state == KEY_LOCKING) || (keyblocks[i].key_state == KEY_RELEASING))
+      { // unknown state, set to released
+        keyblocks[i].key_state = KEY_RELEASED;
+        log_e("Key uncorrecly set: %d state changed to KEY_RELEASED", i);
+      }
+
+      // close all EMs, and turn all leds off
+      keyblocks[i].setEM(false);
+      keyblocks[i].setLED(false, false, false, true);
+    }
+    EM_on_flag = false;
+    EM_on_time = 0;
+  }
+  keyblocks_off = true;
+}
+
 void setup()
 {
   Serial.begin(921600); // Start serial, to output debug data
@@ -63,51 +244,50 @@ void setup()
   pinMode(BUZZER_PIN, OUTPUT);
 
   // Lock
-  front_door_setup();
+  // front_door_setup();
 
-  //server_setup();
+  // server_setup();
 
-   //scanner_setup();
+  // scanner_setup();
   // SDcard_test();
 
   // NFC
-  NFC_setup();
+  // NFC_setup();
 }
 
 void loop()
 {
-  uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  uint8_t uidLength;
+
   // server
   // server_loop();
-
-  if ((door_state == DOOR_CLOSED) || (door_state == DOOR_SHOULD_BE_CLOSED))
-  { // NFC read
-    if (NFC_read(uid, &uidLength))
-    {
-      // check if user is allowed to open the door
-      if (check_card(uid, uidLength))
+  /*
+    if ((door_state == DOOR_CLOSED) || (door_state == DOOR_SHOULD_BE_CLOSED))
+    { // NFC read
+      if (NFC_read(uid, &uidLength))
       {
-        Serial.println("User is allowed to open the door");
-        // open the door
-        door_state = DOOR_OPENING;
-        door_changed = true;
-      }
-      else
-      {
-        // buzzer
-        digitalWrite(BUZZER_PIN, HIGH);
-        digitalWrite(LED_G, LOW);
-        delay(200);
-        digitalWrite(BUZZER_PIN, LOW);
-        digitalWrite(LED_G, HIGH);
-        delay(50);
+        // check if user is allowed to open the door
+        if (check_card(uid, uidLength))
+        {
+          Serial.println("User is allowed to open the door");
+          // open the door
+          door_state = DOOR_OPENING;
+          door_changed = true;
+        }
+        else
+        {
+          // buzzer
+          digitalWrite(BUZZER_PIN, HIGH);
+          digitalWrite(LED_G, LOW);
+          delay(200);
+          digitalWrite(BUZZER_PIN, LOW);
+          digitalWrite(LED_G, HIGH);
+          delay(50);
+        }
       }
     }
-  }
-
+  */
   // KBlk.test_keyblock();
-  //scanner_loop();
+  // scanner_loop();
 
   /*
   // buzzer test
@@ -117,5 +297,8 @@ void loop()
   delay(50);*/
 
   // EM test
-  front_door_loop();
+  // front_door_loop();
+
+  // read keyblock
+  Serial.println(KBlk.read(), BIN);
 }

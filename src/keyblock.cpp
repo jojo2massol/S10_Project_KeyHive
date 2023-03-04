@@ -72,6 +72,9 @@ void Keyblock::setEM(bool state, bool apply)
 {
     setpin(ELECTROMAGNET_PIN, state, apply);
 }
+bool Keyblock::getEM(){
+    return getpin(ELECTROMAGNET_PIN);
+}
 
 void Keyblock::setaddress(uint8_t address)
 {

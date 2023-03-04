@@ -9,3 +9,5 @@
 #define LED_G 4
 #define LED_B 0
 #define LED_R 2
+
+#define KEYBLOCKS_INT_PIN 16
