@@ -7,6 +7,7 @@
 #include "sdcard.h"
 #include "front_door.h"
 #include "NFCread.h"
+#include "user.h"
 
 esp_sleep_wakeup_cause_t wakeup_reason;
 const uint8_t nKeyblocks = 1; // will be 9 in the final version
@@ -62,34 +63,51 @@ void setup()
   pinMode(BUZZER_PIN, OUTPUT);
 
   // Lock
-  front_door_setup();
+  //front_door_setup();
 
-  // server_setup();
+  //server_setup();
 
-  // scanner_setup();
+   scanner_setup();
   // SDcard_test();
 
   // NFC
-  NFC_setup();
+  //NFC_setup();
 }
 
 void loop()
 {
-
+  uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  uint8_t uidLength;
   // server
   // server_loop();
 
   if ((door_state == DOOR_CLOSED) || (door_state == DOOR_SHOULD_BE_CLOSED))
   { // NFC read
-    if (NFC_loop())
+    if (NFC_read(uid, &uidLength))
     {
-      door_state = DOOR_OPENING;
-      door_changed = true;
+      // check if user is allowed to open the door
+      if (check_card(uid, uidLength))
+      {
+        Serial.println("User is allowed to open the door");
+        // open the door
+        door_state = DOOR_OPENING;
+        door_changed = true;
+      }
+      else
+      {
+        // buzzer
+        digitalWrite(BUZZER_PIN, HIGH);
+        digitalWrite(LED_G, LOW);
+        delay(200);
+        digitalWrite(BUZZER_PIN, LOW);
+        digitalWrite(LED_G, HIGH);
+        delay(50);
+      }
     }
   }
 
   // KBlk.test_keyblock();
-  // scanner_loop();
+  scanner_loop();
 
   /*
   // buzzer test

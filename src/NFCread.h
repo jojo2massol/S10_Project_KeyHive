@@ -1,10 +1,10 @@
 #include <Wire.h>
 #include <Adafruit_PN532.h> //NFC
-#define NFC_TIMEOUT 100  //ms
-
+#define NFC_TIMEOUT 100     // ms
 
 // i2c NFC not SPI
 Adafruit_PN532 nfc(2, 3); // not sure of 2 and 3
+
 
 void NFC_setup()
 {
@@ -28,21 +28,19 @@ void NFC_setup()
     nfc.SAMConfig();
 }
 
-bool NFC_loop()
+
+bool NFC_read(uint8_t *uid, uint8_t *uidLength)
 {
-    // get serial number of a card
-    uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    uint8_t uidLength;
 
     // wait for an ISO14443A type cards (Mifare, etc.)
-    if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, NFC_TIMEOUT))
+    if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, uidLength, NFC_TIMEOUT))
     {
         Serial.println("Found a card!");
         Serial.print("UID Length: ");
-        Serial.print(uidLength, DEC);
+        Serial.print(*uidLength, DEC);
         Serial.println(" bytes");
         Serial.print("UID Value: ");
-        nfc.PrintHex(uid, uidLength);
+        nfc.PrintHex(uid, *uidLength);
         Serial.println("");
         return true;
     }
