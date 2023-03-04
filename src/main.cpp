@@ -57,21 +57,21 @@ void setup()
   print_wakeup_reason();
 
   // Set up the keyblocks
-  keyblocks[0].setaddress(0x20);
+  keyblocks[0].setaddress(0x27);
 
   // buzzer as output
   pinMode(BUZZER_PIN, OUTPUT);
 
   // Lock
-  //front_door_setup();
+  front_door_setup();
 
   //server_setup();
 
-   scanner_setup();
+   //scanner_setup();
   // SDcard_test();
 
   // NFC
-  //NFC_setup();
+  NFC_setup();
 }
 
 void loop()
@@ -107,7 +107,7 @@ void loop()
   }
 
   // KBlk.test_keyblock();
-  scanner_loop();
+  //scanner_loop();
 
   /*
   // buzzer test
