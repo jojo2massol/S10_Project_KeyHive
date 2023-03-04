@@ -61,7 +61,7 @@ void front_door_setup()
 
 void front_door_loop()
 {
-    
+
     if (DOOR_SHOULD_BE_CLOSED == door_state)
     {
         if ((millis() - door_change_date > 2000) && (digitalRead(I_LK_PIN) == LOW))
@@ -70,10 +70,15 @@ void front_door_loop()
             door_changed = true;
         }
     }
+    else if (millis() - door_change_date > 2000)
+    {
+        // buzzer off
+        digitalWrite(BUZZER_PIN, LOW);
+    }
     if (door_changed)
     {
         door_changed = false;
-        //Serial.print("Changed :" + String(digitalRead(I_LK_PIN)));
+        // Serial.print("Changed :" + String(digitalRead(I_LK_PIN)));
         if (digitalRead(I_LK_PIN) == LOW)
         { // door just closed
             switch (door_state)
@@ -102,6 +107,8 @@ void front_door_loop()
                 digitalWrite(LED_B, LOW);
                 digitalWrite(LED_G, HIGH);
                 digitalWrite(LED_R, HIGH);
+                // buzzer on
+                digitalWrite(BUZZER_PIN, HIGH);
                 door_state = DOOR_SHOULD_BE_CLOSED;
                 door_changed = true;
                 door_change_date = millis();
@@ -113,7 +120,9 @@ void front_door_loop()
                     door_state = DOOR_CLOSED;
                     door_changed = true;
                     Serial.println("door just closed after 2 seconds");
-                } else{
+                }
+                else
+                {
                     Serial.println("door is closed, and will be considered as closed in 2 seconds");
                 }
             }
