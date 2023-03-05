@@ -46,6 +46,10 @@ void print_wakeup_reason()
 
 void setup()
 {
+  // Set up the keyblocks
+  KBlk.begin();
+  keyblocks[0].setaddress(0x27);
+
   Serial.begin(921600); // Start serial, to output debug data
   while (!Serial)
     ; // Wait for user to open terminal
@@ -53,10 +57,6 @@ void setup()
 
   // Print the wakeup reason for ESP32
   print_wakeup_reason();
-
-  // Set up the keyblocks
-  KBlk.begin();
-  keyblocks[0].setaddress(0x27);
 
   // set keyblocks interrupt
   pinMode(KEYBLOCKS_INT_PIN, INPUT_PULLUP);
@@ -68,7 +68,7 @@ void setup()
   // Lock
   front_door_setup();
 
-  // server_setup();
+  server_setup();
 
   // scanner_setup();
   // SDcard_test();
@@ -81,7 +81,7 @@ void loop()
 {
 
   // server
-  // server_loop();
+  server_loop();
   
     
   
@@ -95,12 +95,13 @@ void loop()
   digitalWrite(BUZZER_PIN, LOW);
   delay(50);*/
 
-  // EM test
   front_door_loop();
 
-  // read keyblock
+  // test keyblock
   // KBlk.set(0b11111111);
   // Serial.println(KBlk.read(), BIN);
-  keyblock_loop();
   // KBlk.test_keyblock();
+
+  // keyblocks
+  keyblock_loop();
 }

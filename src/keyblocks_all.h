@@ -20,140 +20,140 @@ void IRAM_ATTR keyblock_interrupt()
 
 void keyblock_loop()
 {
-    if (keyblocks_interrupt_flag)
+    // check if user logged in
+    if (user_logged_in)
     {
-        keyblocks_interrupt_flag = false;
-        // Serial.print("int|");
-        //  read all keyblocks, and check if any have a limit switch pressed or a push button pressed
-
-        for (int i = 0; i < nKeyblocks; i++)
+        if (keyblocks_interrupt_flag)
         {
-            // read last state of the button
-            bool last_bt_state = keyblocks[i].getPushButton(false);
-            if (keyblocks[i].getPushButton(true) != last_bt_state)
-            {
-                // Serial.println("Button state changed: " + String(keyblocks[i].getPushButton()));
-                EM_on_time = millis();
-                // reset blue light
-                keyblocks[i].setLED(false, false, true, true); // blue
-            }
+            keyblocks_interrupt_flag = false;
+            // Serial.print("int|");
+            //  read all keyblocks, and check if any have a limit switch pressed or a push button pressed
 
-            /*
-             if key Locking :
-             - check if limit switch pressed
-               if so:
-                  - unpower the electromagnet,
-                  - check if any keyblocks have EM powered with getEM(),
-                    if not so:
-                      - set EM_on_flag to false
-             - else if button pressed or just released, set EM_on_time to millis()
-            */
-
-            if (keyblocks[i].key_state == KEY_LOCKING)
+            for (int i = 0; i < nKeyblocks; i++)
             {
-                if (keyblocks[i].getLimitSwitch(true))
+                // read last state of the button
+                bool last_bt_state = keyblocks[i].getPushButton(false);
+                if (keyblocks[i].getPushButton(true) != last_bt_state)
                 {
-                    if (keyblocks[i].getEM())
+                    // Serial.println("Button state changed: " + String(keyblocks[i].getPushButton()));
+                    EM_on_time = millis();
+                    // reset blue light
+                    keyblocks[i].setLED(false, false, true, true); // blue
+                }
+
+                /*
+                 if key Locking :
+                 - check if limit switch pressed
+                   if so:
+                      - unpower the electromagnet,
+                      - check if any keyblocks have EM powered with getEM(),
+                        if not so:
+                          - set EM_on_flag to false
+                 - else if button pressed or just released, set EM_on_time to millis()
+                */
+
+                if (keyblocks[i].key_state == KEY_LOCKING)
+                {
+                    if (keyblocks[i].getLimitSwitch(true))
                     {
-                        keyblocks[i].setEM(false);
-                        keyblocks[i].setLED(false, true, false, true); // green
-                        keyblocks[i].key_state = KEY_LOCKED;
-                        Serial.println("Key " + String(i) + " locked after KEY_LOCKING");
-                        for (int j = 0; j < nKeyblocks; j++)
+                        if (keyblocks[i].getEM())
                         {
-                            if (keyblocks[j].getEM())
+                            keyblocks[i].setEM(false);
+                            keyblocks[i].setLED(false, true, false, true); // green
+                            keyblocks[i].key_state = KEY_LOCKED;
+                            Serial.println("Key " + String(i) + " locked after KEY_LOCKING");
+                            for (int j = 0; j < nKeyblocks; j++)
                             {
-                                break;
-                            }
-                            else if (j == nKeyblocks - 1)
-                            { // if no EM is powered, set EM_on_flag to false
-                                EM_on_flag = false;
-                                EM_on_time = 0;
+                                if (keyblocks[j].getEM())
+                                {
+                                    break;
+                                }
+                                else if (j == nKeyblocks - 1)
+                                { // if no EM is powered, set EM_on_flag to false
+                                    EM_on_flag = false;
+                                    EM_on_time = 0;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            /*
-             if key released :
-             - check if push button pressed
-             - check if the user is allowed to set the key,
-               if so, set the EM, and set the EM_on_flag to true.
-            */
+                /*
+                 if key released :
+                 - check if push button pressed
+                 - check if the user is allowed to set the key,
+                   if so, set the EM, and set the EM_on_flag to true.
+                */
 
-            else if (keyblocks[i].key_state == KEY_RELEASED)
-            {
-                if (keyblocks[i].getPushButton(true))
+                else if (keyblocks[i].key_state == KEY_RELEASED)
                 {
-                    // TODO: check if user is allowed to free the key
+                    if (keyblocks[i].getPushButton(true))
+                    {
+                        // TODO: check if user is allowed to free the key
 
-                    Serial.println("Key " + String(i) + " locking after KEY_RELEASED");
-                    keyblocks[i].key_state = KEY_LOCKING;
-                    keyblocks[i].setEM(true, true);
-                    keyblocks[i].setLED(false, false, true, true); // magenta
-                    EM_on_flag = true;
-                    EM_on_time = millis();
+                        Serial.println("Key " + String(i) + " locking after KEY_RELEASED");
+                        keyblocks[i].key_state = KEY_LOCKING;
+                        keyblocks[i].setEM(true, true);
+                        keyblocks[i].setLED(false, false, true, true); // magenta
+                        EM_on_flag = true;
+                        EM_on_time = millis();
+                    }
                 }
-            }
-            /*
-             if key locked :
-             - check if push button pressed
-             - check if the user is allowed to free the key,
-               if so, set the EM, and set the EM_on_flag to true.
-            */
+                /*
+                 if key locked :
+                 - check if push button pressed
+                 - check if the user is allowed to free the key,
+                   if so, set the EM, and set the EM_on_flag to true.
+                */
 
-            else if (keyblocks[i].key_state == KEY_LOCKED)
-            {
-                if (keyblocks[i].getPushButton(true))
+                else if (keyblocks[i].key_state == KEY_LOCKED)
                 {
-                    // TODO: check if user is allowed to free the key
+                    if (keyblocks[i].getPushButton(true))
+                    {
+                        // TODO: check if user is allowed to free the key
 
-                    Serial.println("Key " + String(i) + " releasing after KEY_LOCKED");
-                    keyblocks[i].setEM(true, true);
-                    keyblocks[i].setLED(false, true, true, true); // cyan
-                    keyblocks[i].key_state = KEY_RELEASING;
-                    EM_on_flag = true;
-                    EM_on_time = millis();
+                        Serial.println("Key " + String(i) + " releasing after KEY_LOCKED");
+                        keyblocks[i].setEM(true, true);
+                        keyblocks[i].setLED(false, true, true, true); // cyan
+                        keyblocks[i].key_state = KEY_RELEASING;
+                        EM_on_flag = true;
+                        EM_on_time = millis();
+                    }
                 }
             }
         }
-    }
 
-    // check if timout has been reached
-    if (EM_on_flag)
-    {
-        if (millis() - EM_on_time > 4000)
+        // check if timout has been reached
+        if (EM_on_flag)
         {
-            Serial.println("Timeout reached, turning off EM, and saving 'released' state");
-            // if so, turn off the EM
-            for (int i = 0; i < nKeyblocks; i++)
+            if (millis() - EM_on_time > 4000)
             {
-                if (keyblocks[i].getEM())
+                Serial.println("Timeout reached, turning off EM, and saving 'released' state");
+                // if so, turn off the EM
+                for (int i = 0; i < nKeyblocks; i++)
                 {
-                    keyblocks[i].setEM(false, true);
-                    keyblocks[i].setLED(true, true, false, true); // yellow
-                    keyblocks[i].key_state = KEY_RELEASED;
+                    if (keyblocks[i].getEM())
+                    {
+                        keyblocks[i].setEM(false, true);
+                        keyblocks[i].setLED(true, true, false, true); // yellow
+                        keyblocks[i].key_state = KEY_RELEASED;
+                    }
+                }
+                EM_on_flag = false;
+                EM_on_time = 0;
+            }
+            else if (millis() - EM_on_time > 2000)
+            {
+                for (int i = 0; i < nKeyblocks; i++)
+                {
+                    if (keyblocks[i].getEM())
+                    {
+                        keyblocks[i].setLED(true, false, true, true); // magenta
+                    }
                 }
             }
-            EM_on_flag = false;
-            EM_on_time = 0;
         }
-        else if (millis() - EM_on_time > 2000)
-        {
-            for (int i = 0; i < nKeyblocks; i++)
-            {
-                if (keyblocks[i].getEM())
-                {
-                    keyblocks[i].setLED(true, false, true, true); // magenta
-                }
-            }
-        }
-    }
 
-    // check if user logged in
-    if (user_logged_in)
-    {
         if (keyblocks_off)
         {
             keyblocks_off = false;
