@@ -4,18 +4,18 @@ uint8_t Keyblock::set(uint8_t data)
 {
     state = data;
     Wire.beginTransmission(address);
-    Wire.write(state);
+    Wire.write(0b11110000 | state); // 0b11110000 is the mask for the inputs
     Wire.endTransmission();
     return state;
 }
 Keyblock::Keyblock()
-: address(0x00)
+: address(0X00), state(0b11111111)
 {}
 
 Keyblock::Keyblock(uint8_t address)
 : address(address)
 {
-    set(0xFF);
+    set(0b11111111);
     // Remarques :
     //    - mettre à "1" une E/S du PCF8574 revient à permettre d'utiliser cette broche en ENTRÉE
     //    - on aura tout de même une tension +Vcc présente sur cette broche, si celle-ci n'est reliée à rien
@@ -49,7 +49,7 @@ void Keyblock::begin()
 
 bool Keyblock::getpin(uint8_t pin)
 {
-    return (state & (1 << pin)) != 0;
+    return (state & (1 << pin)) == 0;
 }
 
 void Keyblock::setpin(uint8_t pin, bool state, bool apply)
@@ -79,13 +79,15 @@ bool Keyblock::getEM(){
 void Keyblock::setaddress(uint8_t address)
 {
     this->address = address;
+    this->state = 0b11111111;
+    set(this->state);
 }
 
 void Keyblock::setLED(bool red, bool green, bool blue, bool apply)
 {
     // do all in one call to variable state
     uint8_t LEDS = !red << LED_R_PIN | !blue << LED_B_PIN | !green << LED_G_PIN;
-    state = (state & B11110001) | LEDS;
+    state = (state & 0b11110001) | LEDS;
     if (apply)
     {
         set(state);

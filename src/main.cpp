@@ -64,10 +64,22 @@ void keyblock_loop()
 {
   if (keyblocks_interrupt_flag)
   {
+    keyblocks_interrupt_flag = false;
+    //Serial.print("int|");
     // read all keyblocks, and check if any have a limit switch pressed or a push button pressed
 
     for (int i = 0; i < nKeyblocks; i++)
     {
+      // read last state of the button
+      bool last_bt_state = keyblocks[i].getPushButton(false);
+      if (keyblocks[i].getPushButton(true) != last_bt_state)
+      {
+        //Serial.println("Button state changed: " + String(keyblocks[i].getPushButton()));
+        EM_on_time = millis();
+        //reset blue light
+        keyblocks[i].setLED(false, false, true, true); // blue
+      }
+
       /*
        if key Locking :
        - check if limit switch pressed
@@ -79,16 +91,16 @@ void keyblock_loop()
        - else if button pressed or just released, set EM_on_time to millis()
       */
 
-      // read last state of the button
-      bool last_bt_state = keyblocks[i].getPushButton(false);
       if (keyblocks[i].key_state == KEY_LOCKING)
       {
         if (keyblocks[i].getLimitSwitch(true))
         {
           if (keyblocks[i].getEM())
           {
-            keyblocks[i].setEM(false, true);
+            keyblocks[i].setEM(false);
+            keyblocks[i].setLED(false, true, false, true); // green
             keyblocks[i].key_state = KEY_LOCKED;
+            Serial.println("Key " + String(i) + " locked after KEY_LOCKING");
             for (int j = 0; j < nKeyblocks; j++)
             {
               if (keyblocks[j].getEM())
@@ -105,12 +117,6 @@ void keyblock_loop()
         }
       }
 
-      if (keyblocks[i].getPushButton() != last_bt_state)
-      {
-        Serial.println("Button state changed: " + String(keyblocks[i].getPushButton()));
-        EM_on_time = millis();
-      }
-
       /*
        if key released :
        - check if push button pressed
@@ -118,19 +124,18 @@ void keyblock_loop()
          if so, set the EM, and set the EM_on_flag to true.
       */
 
-      if (keyblocks[i].key_state == KEY_RELEASED)
+      else if (keyblocks[i].key_state == KEY_RELEASED)
       {
         if (keyblocks[i].getPushButton(true))
         {
           // TODO: check if user is allowed to free the key
-          if (millis() - EM_on_time > 1000)
-          {
-            Serial.println("Key " + String(i) + " locking");
-            keyblocks[i].key_state = KEY_LOCKING;
-            keyblocks[i].setEM(true, true);
-            EM_on_flag = true;
-            EM_on_time = millis();
-          }
+
+          Serial.println("Key " + String(i) + " locking after KEY_RELEASED");
+          keyblocks[i].key_state = KEY_LOCKING;
+          keyblocks[i].setEM(true, true);
+          keyblocks[i].setLED(false, false, true, true); //magenta
+          EM_on_flag = true;
+          EM_on_time = millis();
         }
       }
       /*
@@ -140,14 +145,15 @@ void keyblock_loop()
          if so, set the EM, and set the EM_on_flag to true.
       */
 
-      if (keyblocks[i].key_state == KEY_LOCKED)
+      else if (keyblocks[i].key_state == KEY_LOCKED)
       {
         if (keyblocks[i].getPushButton(true))
         {
           // TODO: check if user is allowed to free the key
 
-          Serial.println("Key " + String(i) + " releasing");
+          Serial.println("Key " + String(i) + " releasing after KEY_LOCKED");
           keyblocks[i].setEM(true, true);
+          keyblocks[i].setLED(false, true, true, true); // cyan
           keyblocks[i].key_state = KEY_RELEASING;
           EM_on_flag = true;
           EM_on_time = millis();
@@ -159,7 +165,7 @@ void keyblock_loop()
   // check if timout has been reached
   if (EM_on_flag)
   {
-    if (millis() - EM_on_time > 10000)
+    if (millis() - EM_on_time > 4000)
     {
       Serial.println("Timeout reached, turning off EM, and saving 'released' state");
       // if so, turn off the EM
@@ -168,11 +174,20 @@ void keyblock_loop()
         if (keyblocks[i].getEM())
         {
           keyblocks[i].setEM(false, true);
+          keyblocks[i].setLED(true, true, false, true); // yellow
           keyblocks[i].key_state = KEY_RELEASED;
         }
       }
       EM_on_flag = false;
       EM_on_time = 0;
+    } else if (millis() - EM_on_time > 2000) {
+        for (int i = 0; i < nKeyblocks; i++)
+        {
+          if (keyblocks[i].getEM())
+          {
+            keyblocks[i].setLED(true, false, true, true); // magenta
+          }
+        }
     }
   }
 
@@ -251,10 +266,12 @@ void setup()
   print_wakeup_reason();
 
   // Set up the keyblocks
+  KBlk.begin();
   keyblocks[0].setaddress(0x27);
+
   // set keyblocks interrupt
   pinMode(KEYBLOCKS_INT_PIN, INPUT_PULLUP);
-  attachInterrupt(KEYBLOCKS_INT_PIN, keyblock_interrupt, CHANGE);
+  attachInterrupt(KEYBLOCKS_INT_PIN, keyblock_interrupt, FALLING);
 
   // buzzer as output
   pinMode(BUZZER_PIN, OUTPUT);
@@ -268,7 +285,7 @@ void setup()
   // SDcard_test();
 
   // NFC
-  NFC_setup();
+  // NFC_setup();
 }
 
 void loop()
@@ -316,7 +333,8 @@ void loop()
   // front_door_loop();
 
   // read keyblock
+  // KBlk.set(0b11111111);
   // Serial.println(KBlk.read(), BIN);
-  //keyblock_loop();
-  KBlk.test_keyblock();
+  keyblock_loop();
+  // KBlk.test_keyblock();
 }
