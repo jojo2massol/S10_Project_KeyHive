@@ -11,7 +11,6 @@
 
 esp_sleep_wakeup_cause_t wakeup_reason;
 
-
 /*
 Method to print the reason by which ESP32
 has been awaken from sleep
@@ -68,24 +67,29 @@ void setup()
   // Lock
   front_door_setup();
 
+  // server
   server_setup();
-
-  // scanner_setup();
-  // SDcard_test();
 
   // NFC
   NFC_setup();
+
+  // scanner_setup();
+  // SDcard_test();
 }
 
 void loop()
-{
-
-  // server
+{ // server
   server_loop();
-  
-    
-  
+  // front door
+  front_door_loop();
+  // keyblocks
+  keyblock_loop();
+
+  // test keyblock
+  // KBlk.set(0b11111111);
+  // Serial.println(KBlk.read(), BIN);
   // KBlk.test_keyblock();
+
   // scanner_loop();
 
   /*
@@ -94,14 +98,4 @@ void loop()
   delay(200);
   digitalWrite(BUZZER_PIN, LOW);
   delay(50);*/
-
-  front_door_loop();
-
-  // test keyblock
-  // KBlk.set(0b11111111);
-  // Serial.println(KBlk.read(), BIN);
-  // KBlk.test_keyblock();
-
-  // keyblocks
-  keyblock_loop();
 }
