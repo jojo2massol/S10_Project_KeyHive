@@ -70,7 +70,7 @@ void Keyblock::setpin(uint8_t pin, bool state, bool apply)
 
 void Keyblock::setEM(bool state, bool apply)
 {
-    setpin(ELECTROMAGNET_PIN, state, apply);
+    setpin(ELECTROMAGNET_PIN, !state, apply);
 }
 bool Keyblock::getEM(){
     return getpin(ELECTROMAGNET_PIN);
@@ -84,8 +84,12 @@ void Keyblock::setaddress(uint8_t address)
 void Keyblock::setLED(bool red, bool green, bool blue, bool apply)
 {
     // do all in one call to variable state
-    uint8_t LEDS = red << LED_R_PIN | blue << LED_B_PIN | green << LED_G_PIN;
+    uint8_t LEDS = !red << LED_R_PIN | !blue << LED_B_PIN | !green << LED_G_PIN;
     state = (state & B11110001) | LEDS;
+    if (apply)
+    {
+        set(state);
+    }
 }
 
 bool Keyblock::getLimitSwitch(bool update)
@@ -108,29 +112,33 @@ bool Keyblock::getPushButton(bool update)
 
 void Keyblock::test_keyblock()
 {
+    const uint16_t DELAY = 1000;
     // test de la broche 0 (électroaimant)
     setEM(true);
-    delay(1000);
-    setEM(false);
-    delay(1000);
     // test blanc (rouge + vert + bleu)
-    setLED(true, true, true);
+    setLED(true, true, true, true);
+    delay(DELAY);
     // test de la broche 1 (LED rouge)
-    setLED(true, false, false);
-    delay(1000);
+    setLED(true, false, false, true);
+    delay(DELAY);
     // test de la broche 2 (LED verte)
-    setLED(false, true, false);
-    delay(1000);
+    setLED(false, true, false, true);
+    delay(DELAY);
     // test de la broche 3 (LED bleue)
-    setLED(false, false, true);
-    delay(1000);
+    setLED(false, false, true, true);
+    delay(DELAY);
+    //EM
+    setEM(false, true);
     // test jaune (rouge + vert)
-    setLED(true, true, false);
-    delay(1000);
+    setLED(true, true, false, true);
+    delay(DELAY);
     // test cyan (vert + bleu)
-    setLED(false, true, true);
-    delay(1000);
+    setLED(false, true, true, true);
+    delay(DELAY);
     // test magenta (rouge + bleu)
-    setLED(true, false, true);
-    delay(1000);
+    setLED(true, false, true, true);
+    delay(DELAY);
+    // test noir
+    setLED(false, false, false, true);
+    delay(DELAY);
 }

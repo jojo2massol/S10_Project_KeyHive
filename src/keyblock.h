@@ -7,9 +7,10 @@ communicates with the PCF8574 via I2C.
 #include <Wire.h>
 #include "arduino.h"
 #define ELECTROMAGNET_PIN 0 // output
-#define LED_R_PIN 1         // output
+// these LED pins may have to be changed on final hardware
+#define LED_R_PIN 3         // output
 #define LED_B_PIN 2         // output
-#define LED_G_PIN 3         // output
+#define LED_G_PIN 1         // output
 #define LIMIT_SWITCH_PIN 6  // input
 #define PUSH_BUTTON_PIN 7   // input
 
@@ -18,16 +19,15 @@ communicates with the PCF8574 via I2C.
 #define KEY_RELEASING 2
 #define KEY_LOCKING 3
 
-
 class Keyblock
 {
 private:
     uint8_t address;
     uint8_t state;
-    uint8_t set(uint8_t data);
+
 public:
     uint8_t key_state = KEY_RELEASED;
-
+    uint8_t set(uint8_t data);
     Keyblock();
     Keyblock(uint8_t address);
     void begin();                                             // execute only once for all keyblocks (Wire.begin())
@@ -42,4 +42,4 @@ public:
     bool getLimitSwitch(bool update = false);
     bool getPushButton(bool update = false);
     void test_keyblock();
-};  
+};

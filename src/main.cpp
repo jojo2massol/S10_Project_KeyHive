@@ -317,5 +317,6 @@ void loop()
 
   // read keyblock
   // Serial.println(KBlk.read(), BIN);
-  keyblock_loop();
+  //keyblock_loop();
+  KBlk.test_keyblock();
 }
