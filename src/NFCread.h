@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Wire.h>
 #include <Adafruit_PN532.h> //NFC
 #define NFC_TIMEOUT 100     // ms

@@ -1,6 +1,10 @@
+#pragma once
+
 #include <Arduino.h>
 
 #include "pins.h"
+#include "user.h"
+#include "NFCread.h"
 
 volatile unsigned long door_change_date = 0;
 volatile unsigned long last_door_change_date = 0;
@@ -61,6 +65,37 @@ void front_door_setup()
 
 void front_door_loop()
 {
+    if ((door_state == DOOR_CLOSED) || (door_state == DOOR_SHOULD_BE_CLOSED))
+    { // NFC read
+        if (NFC_read(uid, &uidLength))
+        {
+            // check if user is allowed to open the door
+            if (check_card(uid, uidLength))
+            {
+                user_logged_in = true;
+                Serial.println("User is allowed to open the door");
+                Serial.print("UID: ");
+                for (int i = 0; i < uidLength; i++)
+                {
+                    Serial.print(uid[i], HEX);
+                }
+                Serial.println();
+                // open the door
+                door_state = DOOR_OPENING;
+                door_changed = true;
+            }
+            else
+            {
+                // buzzer
+                digitalWrite(BUZZER_PIN, HIGH);
+                digitalWrite(LED_G, LOW);
+                delay(200);
+                digitalWrite(BUZZER_PIN, LOW);
+                digitalWrite(LED_G, HIGH);
+                delay(50);
+            }
+        }
+    }
 
     if (DOOR_SHOULD_BE_CLOSED == door_state)
     {
@@ -70,14 +105,38 @@ void front_door_loop()
             {
                 door_state = DOOR_CLOSED;
                 door_changed = true;
-            } else 
+                if (user_logged_in)
+                {
+                    user_logged_in = false;
+                    Serial.println("User logged out. UID :");
+                    Serial.print("UID: ");
+                    for (int i = 0; i < uidLength; i++)
+                    {
+                        Serial.print(uid[i], HEX);
+                    }
+                }
+                Serial.println();
+
+                Serial.println("keyblocks_off :");
+                Serial.println(keyblocks_off);
+            }
+            else
             {
-                //buzzer on
+                // buzzer on
                 digitalWrite(BUZZER_PIN, HIGH);
+                log_e("User uncorrectly closed the door");
+                Serial.print("UID: ");
+                for (int i = 0; i < uidLength; i++)
+                {
+                    Serial.print(uid[i], HEX);
+                }
+                Serial.println();
             }
         }
-    } else{
-        //buzz off
+    }
+    else
+    {
+        // buzz off
         digitalWrite(BUZZER_PIN, LOW);
     }
 
@@ -123,6 +182,16 @@ void front_door_loop()
                 {
                     door_state = DOOR_CLOSED;
                     door_changed = true;
+                    if (user_logged_in)
+                    {
+                        user_logged_in = false;
+                        Serial.println("User logged out. UID :");
+                        for (int i = 0; i < uidLength; i++)
+                        {
+                            Serial.print(uid[i], HEX);
+                        }
+                        Serial.println();
+                    }
                     Serial.println("door just closed after 2 seconds");
                 }
                 else

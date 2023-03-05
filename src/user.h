@@ -2,6 +2,10 @@
 
 #include <Arduino.h>
 
+bool user_logged_in = false;
+uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uint8_t uidLength;
+
 // test table of allowed cards
 const uint8_t allowed_cards[][7] = {
     // 0x67 0x38 0x1A 0x2D
