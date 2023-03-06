@@ -85,6 +85,11 @@ void loop()
   // keyblocks
   keyblock_loop();
 
+  // if door open, reset watchdog
+
+  if (door_state == DOOR_OPEN)
+    esp_task_wdt_reset();
+
   // test keyblock
   // KBlk.set(0b11111111);
   // Serial.println(KBlk.read(), BIN);

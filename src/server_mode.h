@@ -6,9 +6,8 @@
 #include "ArduinoJSON.h"
 #include "arduino.h"
 #include <esp_task_wdt.h>
+#include "watchdog.h"
 
-// 120 seconds WDT
-#define WDT_TIMEOUT 120
 
 
 inline void notFound(AsyncWebServerRequest *request)
