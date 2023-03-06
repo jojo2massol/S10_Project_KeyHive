@@ -1,46 +1,30 @@
 #pragma once
 
 #include <Arduino.h>
+#include "keyblocks_all.h"
 
-bool user_logged_in = false;
-uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-uint8_t uidLength;
 
-// test table of allowed cards
-const uint8_t allowed_cards[][7] = {
-    // 0x67 0x38 0x1A 0x2D
-    //{0x67, 0x38, 0x1A, 0x2D, 0x00, 0x00, 0x00}, // 4 bytes
-    // 0x04 0x30 0x8A 0x3A 0xFF 0x42 0x80
-    {0x04, 0x30, 0x8A, 0x3A, 0xFF, 0x42, 0x80}, // 7 bytes
-};
-const uint8_t allowed_cards_length[] = {
-    // 4,
-    7};
 
-// function that takes a pointer to a UID from an NFC card and UID length, and returns true if the card is allowed to open the door, false otherwise
-bool check_card(const uint8_t *uid, const uint8_t uidLength)
+// will be replaced by :
+#define User_max_length 16
+
+class User
 {
-    // check if the card is in the allowed cards table
-    for (uint8_t i = 0; i < sizeof(allowed_cards) / sizeof(allowed_cards[0]); i++)
-    {
-        // check if the UID length is the same
-        if (uidLength == allowed_cards_length[i])
-        {
-            // check if the UID is the same
-            bool same = true;
-            for (uint8_t j = 0; j < uidLength; j++)
-            {
-                if (uid[j] != allowed_cards[i][j])
-                {
-                    same = false;
-                    break;
-                }
-            }
-            if (same)
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
+private:
+    bool allowed_keys[nKeyblocks];
+    bool open_door = false;
+    bool check_card();
+    bool load_allowed_keys();
+public:
+    uint8_t uid[User_max_length];
+    uint8_t uidLength;
+    bool logged_in = false;
+    User();
+    ~User();
+    void logIn(uint8_t *uid, uint8_t *uidLength);
+    void logOut();
+    bool canOpenDoor();
+    bool canReleaseKey(uint8_t n_keyblock);
+};
+
+User user;

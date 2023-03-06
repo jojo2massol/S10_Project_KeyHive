@@ -68,7 +68,7 @@ void front_door_loop()
 {
     if ((door_state == DOOR_CLOSED) || (door_state == DOOR_SHOULD_BE_CLOSED))
     { // NFC read
-        if (NFC_read(uid, &uidLength))
+        if (NFC_read(*user.uid, *user.uidLength))
         {
             // check if user is allowed to open the door
             if (check_card(uid, uidLength))

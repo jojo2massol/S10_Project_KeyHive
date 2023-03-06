@@ -1,9 +1,10 @@
 #pragma once
 
+#define nKeyblocks 1 // number of keyblocks
+
 #include "keyblock.h"
 #include "user.h"
 
-#define nKeyblocks 1 // number of keyblocks
 Keyblock keyblocks[nKeyblocks];
 #define KBlk keyblocks[0] // remove in the final version
 volatile bool EM_on_flag = false;
@@ -21,7 +22,7 @@ void IRAM_ATTR keyblock_interrupt()
 void keyblock_loop()
 {
     // check if user logged in
-    if (user_logged_in)
+    if (user.logged_in)
     {
         if (keyblocks_interrupt_flag)
         {
