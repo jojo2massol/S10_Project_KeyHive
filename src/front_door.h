@@ -5,6 +5,7 @@
 #include "pins.h"
 #include "user.h"
 #include "NFCread.h"
+#include "esp32-hal-log.h"
 
 volatile unsigned long door_change_date = 0;
 volatile unsigned long last_door_change_date = 0;
@@ -137,7 +138,8 @@ void front_door_loop()
     else
     {
         // buzz off
-        digitalWrite(BUZZER_PIN, LOW);
+        //log_e("%i", door_state);
+        //digitalWrite(BUZZER_PIN, LOW);
     }
 
     if (door_changed)
@@ -155,6 +157,7 @@ void front_door_loop()
                 digitalWrite(LED_B, HIGH);
                 digitalWrite(LED_G, HIGH);
                 digitalWrite(LED_R, LOW);
+                digitalWrite(BUZZER_PIN, LOW);
                 break;
             case DOOR_OPENING:
                 Serial.println("door will open soon");
@@ -233,6 +236,7 @@ void front_door_loop()
             case DOOR_CLOSED:
                 // the door is closed, but should be open, alarm !!!
                 Serial.println("door is open, but should be considered as closed, alarm !!!");
+                door_state = DOOR_SHOULD_BE_CLOSED;
                 // magenta led
                 digitalWrite(LED_B, LOW);
                 digitalWrite(LED_G, HIGH);

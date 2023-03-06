@@ -49,6 +49,10 @@ void setup()
   KBlk.begin();
   keyblocks[0].setaddress(0x27);
 
+  // buzzer as output
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+
   Serial.begin(921600); // Start serial, to output debug data
   while (!Serial)
     ; // Wait for user to open terminal
@@ -61,8 +65,7 @@ void setup()
   pinMode(KEYBLOCKS_INT_PIN, INPUT_PULLUP);
   attachInterrupt(KEYBLOCKS_INT_PIN, keyblock_interrupt, FALLING);
 
-  // buzzer as output
-  pinMode(BUZZER_PIN, OUTPUT);
+
 
   // Lock
   front_door_setup();
@@ -86,7 +89,7 @@ void loop()
   keyblock_loop();
 
   // if door open, reset watchdog
-
+  // be careful, watchdog is set in server_mode.
   if (door_state == DOOR_OPEN)
     esp_task_wdt_reset();
 
