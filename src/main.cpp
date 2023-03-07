@@ -47,8 +47,8 @@ void setup()
 {
   // Set up the keyblocks
   KBlk.begin();
-  keyblocks[0].setaddress(0x27);
-
+  keyblocks[0].setaddress(0x26);
+  keyblocks[1].setaddress(0x27);
   // buzzer as output
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
