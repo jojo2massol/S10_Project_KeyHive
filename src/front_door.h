@@ -154,6 +154,7 @@ void front_door_loop()
             case DOOR_CLOSED:
                 // the door is closed for more than 2 seconds, everything is fine
                 Serial.println("door is closed for more than 2 seconds");
+                user.logOut();
                 // red led
                 digitalWrite(LED_B, HIGH);
                 digitalWrite(LED_G, HIGH);

@@ -19,7 +19,7 @@ const bool allowed_keys_fake[][nKeyblocks] = {
     // Georges de Massol
     {true, false},
     // Etienne Sommier
-    {false, true},
+    {true, true},
 };
 
 // function that takes a pointer to a UID from an NFC card and UID length,
@@ -68,7 +68,7 @@ bool User::load_allowed_keys()
     for (uint8_t i = 0; i < nKeyblocks; i++)
     {
         allowed_keys[i] = (bool)(allowed_keys_fake[userindex][i]);
-        log_e("allowed_keys_fake[%d][%d] = %d", userindex, i, (bool)(allowed_keys_fake[userindex][i]));
+        //log_e("allowed_keys_fake[%d][%d] = %d", userindex, i, (bool)(allowed_keys_fake[userindex][i]));
 
         if (allowed_keys[i] == true)
             open_door = true;
@@ -101,7 +101,11 @@ void User::logIn(uint8_t *uid, uint8_t *uidLength)
     }
     logged_in = true;
     // load allowed keys.
-    load_allowed_keys();
+    bool isUser = load_allowed_keys();
+    if (!isUser)
+    {
+        logOut();
+    }
 }
 void User::logOut()
 {

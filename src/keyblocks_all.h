@@ -3,7 +3,6 @@
 #include "keyblock.h"
 #include "user.h"
 
-
 Keyblock keyblocks[nKeyblocks];
 #define KBlk keyblocks[0] // remove in the final version
 volatile bool EM_on_flag = false;
@@ -23,6 +22,53 @@ void keyblock_loop()
     // check if user logged in
     if (user.logged_in)
     {
+        if (keyblocks_off)
+        {
+            keyblocks_off = false;
+            //Serial.println("keyblocks_off :");
+            //Serial.println(keyblocks_off);
+            Serial.println("User logged in, turning on keyblocks");
+            // read permission of the user for each key
+            for (int i = 0; i < nKeyblocks; i++)
+            {
+                // TODO : read permission of the user for each key
+                // if permission is granted, allowed keys can be released.
+
+                /*
+                permission not granted:
+                - key is red
+                if permission granted:
+                - locked key is green
+                - released key is yellow
+                - locking key is magenta
+                - releasing key is cyan
+                */
+                if (user.canReleaseKey(i))
+                {
+                    if (keyblocks[i].key_state == KEY_LOCKED)
+                    {
+                        keyblocks[i].setLED(false, true, false, true); // green
+                    }
+                    else if (keyblocks[i].key_state == KEY_RELEASED)
+                    {
+                        keyblocks[i].setLED(true, true, false, true); // yellow
+                    }
+                    else if (keyblocks[i].key_state == KEY_LOCKING)
+                    {
+                        keyblocks[i].setLED(true, false, true, true); // magenta
+                    }
+                    else if (keyblocks[i].key_state == KEY_RELEASING)
+                    {
+                        keyblocks[i].setLED(false, true, true, true); // cyan
+                    }
+                }
+                else
+                {
+                    keyblocks[i].setLED(true, false, false, true); // red
+                }
+            }
+        }
+
         if (keyblocks_interrupt_flag)
         {
             keyblocks_interrupt_flag = false;
@@ -33,12 +79,18 @@ void keyblock_loop()
             {
                 // read last state of the button
                 bool last_bt_state = keyblocks[i].getPushButton(false);
-                if (keyblocks[i].getPushButton(true) != last_bt_state)
+                if ((keyblocks[i].getPushButton(true) != last_bt_state) && user.canReleaseKey(i))
                 {
                     // Serial.println("Button state changed: " + String(keyblocks[i].getPushButton()));
                     EM_on_time = millis();
                     // reset blue light
                     keyblocks[i].setLED(false, false, true, true); // blue
+                }
+
+                // if user not allowed to set the key, break the loop
+                if (!user.canReleaseKey(i))
+                {
+                    break;
                 }
 
                 /*
@@ -87,6 +139,7 @@ void keyblock_loop()
 
                 else if (keyblocks[i].key_state == KEY_RELEASED)
                 {
+
                     if (keyblocks[i].getPushButton(true))
                     {
                         // TODO: check if user is allowed to free the key
@@ -150,53 +203,6 @@ void keyblock_loop()
                     {
                         keyblocks[i].setLED(true, false, true, true); // magenta
                     }
-                }
-            }
-        }
-
-        if (keyblocks_off)
-        {
-            keyblocks_off = false;
-            Serial.println("keyblocks_off :");
-            Serial.println(keyblocks_off);
-            Serial.println("User logged in, turning on keyblocks");
-            // read permission of the user for each key
-            for (int i = 0; i < nKeyblocks; i++)
-            {
-                // TODO : read permission of the user for each key
-                // if permission is granted, allowed keys can be released.
-
-                /*
-                permission not granted:
-                - key is red
-                if permission granted:
-                - locked key is green
-                - released key is yellow
-                - locking key is magenta
-                - releasing key is cyan
-                */
-                if (user.canReleaseKey(i))
-                {
-                    if (keyblocks[i].key_state == KEY_LOCKED)
-                    {
-                        keyblocks[i].setLED(false, true, false, true); // green
-                    }
-                    else if (keyblocks[i].key_state == KEY_RELEASED)
-                    {
-                        keyblocks[i].setLED(true, true, false, true); // yellow
-                    }
-                    else if (keyblocks[i].key_state == KEY_LOCKING)
-                    {
-                        keyblocks[i].setLED(true, false, true, true); // magenta
-                    }
-                    else if (keyblocks[i].key_state == KEY_RELEASING)
-                    {
-                        keyblocks[i].setLED(false, true, true, true); // cyan
-                    }
-                }
-                else
-                {
-                    keyblocks[i].setLED(true, false, false, true); // red
                 }
             }
         }
