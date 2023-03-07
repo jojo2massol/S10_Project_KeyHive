@@ -1,5 +1,7 @@
 #include <WiFi.h>
 
+#include "user.h"
+User user;
 #include "server_mode.h"
 #include "keyblocks_all.h"
 #include "scanner_I2C.h"
@@ -7,7 +9,6 @@
 #include "sdcard.h"
 #include "front_door.h"
 #include "NFCread.h"
-#include "user.h"
 
 esp_sleep_wakeup_cause_t wakeup_reason;
 

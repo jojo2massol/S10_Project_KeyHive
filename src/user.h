@@ -26,5 +26,3 @@ public:
     bool canOpenDoor();
     bool canReleaseKey(uint8_t n_keyblock);
 };
-
-User user;
