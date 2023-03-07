@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Arduino.h>
+#include <stdint.h>
+#include <esp32-hal-log.h>
 #include "keyblock_csts.h"
 
 

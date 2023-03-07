@@ -45,10 +45,9 @@ bool User::check_card()
             }
             if (same)
             {
-                return true;
-
                 // to be removed when database is implemented
                 userindex = i;
+                return true;
             }
         }
     }
@@ -68,7 +67,8 @@ bool User::load_allowed_keys()
     // TODO
     for (uint8_t i = 0; i < nKeyblocks; i++)
     {
-        allowed_keys[i] = allowed_keys_fake[userindex][i];
+        allowed_keys[i] = (bool)(allowed_keys_fake[userindex][i]);
+        log_e("allowed_keys_fake[%d][%d] = %d", userindex, i, (bool)(allowed_keys_fake[userindex][i]));
 
         if (allowed_keys[i] == true)
             open_door = true;
