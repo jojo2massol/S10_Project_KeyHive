@@ -12,8 +12,16 @@ const uint8_t allowed_cards_length[] = {
     7,
 };
 
+// fake test TO BE REMOVED
+const bool allowed_keys_fake[][nKeyblocks] = {
+    // NFC tag
+    {false, false},
+    // Georges de Massol
+    {true, false},
+    // Etienne Sommier
+    {false, true},
+};
 
-   
 // function that takes a pointer to a UID from an NFC card and UID length,
 // and returns true if the card is allowed to open the door, false otherwise
 // this function should be removed and replaced by a function that checks the user's rights
@@ -38,6 +46,9 @@ bool User::check_card()
             if (same)
             {
                 return true;
+
+                // to be removed when database is implemented
+                userindex = i;
             }
         }
     }
@@ -55,9 +66,9 @@ bool User::load_allowed_keys()
     }
 
     // TODO
-    for (int i = 0; i < nKeyblocks; i++)
+    for (uint8_t i = 0; i < nKeyblocks; i++)
     {
-        allowed_keys[i] = true; // Fake allowed keys
+        allowed_keys[i] = allowed_keys_fake[userindex][i];
 
         if (allowed_keys[i] == true)
             open_door = true;

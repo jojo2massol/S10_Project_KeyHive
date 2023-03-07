@@ -15,6 +15,7 @@ private:
     bool open_door = false;
     bool check_card();
     bool load_allowed_keys();
+    uint8_t userindex = -1; // to be removed when database is implemented
 public:
     uint8_t uid[User_max_length];
     uint8_t uidLength;
