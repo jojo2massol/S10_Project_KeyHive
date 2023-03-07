@@ -1,9 +1,9 @@
 #pragma once
 
-#define nKeyblocks 1 // number of keyblocks
-
 #include "keyblock.h"
 #include "user.h"
+
+#define nKeyblocks 2 // number of keyblocks
 
 Keyblock keyblocks[nKeyblocks];
 #define KBlk keyblocks[0] // remove in the final version
