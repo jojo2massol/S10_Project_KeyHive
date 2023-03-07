@@ -68,17 +68,19 @@ void front_door_loop()
 {
     if ((door_state == DOOR_CLOSED) || (door_state == DOOR_SHOULD_BE_CLOSED))
     { // NFC read
-        if (NFC_read(*user.uid, *user.uidLength))
+        uint8_t uid[User_max_length];
+        uint8_t uidLength = User_max_length;
+        if (NFC_read(uid, &uidLength))
         {
+            user.logIn(uid, &uidLength);
             // check if user is allowed to open the door
-            if (check_card(uid, uidLength))
+            if (user.canOpenDoor())
             {
-                user_logged_in = true;
                 Serial.println("User is allowed to open the door");
                 Serial.print("UID: ");
-                for (int i = 0; i < uidLength; i++)
+                for (int i = 0; i < user.uidLength; i++)
                 {
-                    Serial.print(uid[i], HEX);
+                    Serial.print(user.uid[i], HEX);
                 }
                 Serial.println();
                 // open the door
@@ -106,14 +108,13 @@ void front_door_loop()
             {
                 door_state = DOOR_CLOSED;
                 door_changed = true;
-                if (user_logged_in)
+                if (user.logged_in)
                 {
-                    user_logged_in = false;
                     Serial.println("User logged out. UID :");
                     Serial.print("UID: ");
-                    for (int i = 0; i < uidLength; i++)
+                    for (int i = 0; i < user.uidLength; i++)
                     {
-                        Serial.print(uid[i], HEX);
+                        Serial.print(user.uid[i], HEX);
                     }
                 }
                 Serial.println();
@@ -127,9 +128,9 @@ void front_door_loop()
                 digitalWrite(BUZZER_PIN, HIGH);
                 log_e("User uncorrectly closed the door");
                 Serial.print("UID: ");
-                for (int i = 0; i < uidLength; i++)
+                for (int i = 0; i < user.uidLength; i++)
                 {
-                    Serial.print(uid[i], HEX);
+                    Serial.print(user.uid[i], HEX);
                 }
                 Serial.println();
             }
@@ -185,13 +186,12 @@ void front_door_loop()
                 {
                     door_state = DOOR_CLOSED;
                     door_changed = true;
-                    if (user_logged_in)
+                    if (user.logged_in)
                     {
-                        user_logged_in = false;
                         Serial.println("User logged out. UID :");
-                        for (int i = 0; i < uidLength; i++)
+                        for (int i = 0; i < user.uidLength; i++)
                         {
-                            Serial.print(uid[i], HEX);
+                            Serial.print(user.uid[i], HEX);
                         }
                         Serial.println();
                     }

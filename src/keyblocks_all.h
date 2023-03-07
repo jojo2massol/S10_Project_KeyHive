@@ -3,7 +3,6 @@
 #include "keyblock.h"
 #include "user.h"
 
-#define nKeyblocks 2 // number of keyblocks
 
 Keyblock keyblocks[nKeyblocks];
 #define KBlk keyblocks[0] // remove in the final version
@@ -176,7 +175,7 @@ void keyblock_loop()
                 - locking key is magenta
                 - releasing key is cyan
                 */
-                if (check_card(uid, uidLength))
+                if (user.canReleaseKey(i))
                 {
                     if (keyblocks[i].key_state == KEY_LOCKED)
                     {
